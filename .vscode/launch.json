@@ -15,15 +15,8 @@
             "osx": {
                 "MIMode": "lldb",
                 "externalConsole":true
-            }
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "LLDB",
-            "program": "${workspaceFolder}/${defaultBuildTask}/bin/observer",
-            "args": ["-f", "${workspaceFolder}/etc/observer.ini", "-P", "cli"],
-            "cwd": "${workspaceFolder}/${defaultBuildTask}/"
+            },
+            "preLaunchTask": "build_debug"
         }
     ]
 }
