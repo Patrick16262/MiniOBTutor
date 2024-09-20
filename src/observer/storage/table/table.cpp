@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <limits.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "common/defs.h"
 #include "common/lang/string.h"
@@ -124,6 +125,39 @@ RC Table::create(Db *db, int32_t table_id, const char *path, const char *name, c
   }
 
   LOG_INFO("Successfully create table %s:%s", base_dir, name);
+  return rc;
+}
+
+RC Table::drop(Db *db, const char *path, const char *base_dir)
+{
+  RC rc = RC::SUCCESS;
+
+  data_buffer_pool_->close_file();
+  data_buffer_pool_ = nullptr;
+
+  if (::unlink(path) == -1) {
+    LOG_ERROR("Failed to drop meta file. filename=%s, errmsg=%s", path, strerror(errno));
+    return RC::IOERR_DELETE;
+  }
+
+  string data_file = table_data_file(base_dir, name());
+
+  if (::unlink(data_file.c_str()) == -1) {
+    LOG_ERROR("Failed to drop data file. filename=%s, errmsg=%s", base_dir, strerror(errno));
+    return RC::IOERR_DELETE;
+  }
+
+  for (vector<Index *>::iterator it = indexes_.begin(); it != indexes_.end(); ++it) {
+    BplusTreeIndex *index = (BplusTreeIndex *)*it;
+    index->close();
+    string index_file_path = table_index_file(base_dir_.c_str(), name(), index->index_meta().name());
+    if (::unlink(index_file_path.c_str()) == -1) {
+      LOG_ERROR("Failed to drop index file. filepath=%s, errmsg=%s", index_file_path.c_str(), strerror(errno));
+      return RC::IOERR_DELETE;
+    }
+  }
+
+  LOG_INFO("Successfully drop table %s:%s", base_dir, name());
   return rc;
 }
 
@@ -272,7 +306,7 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
 
   for (int i = 0; i < value_num && OB_SUCC(rc); i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-    const Value &    value = values[i];
+    const Value     &value = values[i];
     if (field->type() != value.attr_type()) {
       Value real_value;
       rc = Value::cast_to(value, field->type(), real_value);

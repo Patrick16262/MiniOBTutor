@@ -47,12 +47,19 @@ public:
    * 创建一个表
    * @param path 元数据保存的文件(完整路径)
    * @param name 表名
-   * @param base_dir 表数据存放的路径
+   * @param base_dir 表数据存放的文件夹路径
    * @param attribute_count 字段个数
    * @param attributes 字段
    */
   RC create(Db *db, int32_t table_id, const char *path, const char *name, const char *base_dir,
       span<const AttrInfoSqlNode> attributes, StorageFormat storage_format);
+
+  /**
+   * 删除表
+   * @param path 元数据保存的文件(完整路径)
+   * @param base_dir 表数据存放的文件夹路径
+   */
+  RC drop(Db *db, const char *path, const char *base_dir);
 
   /**
    * 打开一个表
@@ -124,7 +131,7 @@ public:
 
 private:
   Db                *db_ = nullptr;
-  string             base_dir_;
+  string             base_dir_;  /// 数据文件地址
   TableMeta          table_meta_;
   DiskBufferPool    *data_buffer_pool_ = nullptr;  /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_   = nullptr;  /// 记录操作
