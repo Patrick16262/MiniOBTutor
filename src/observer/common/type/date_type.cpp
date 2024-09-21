@@ -4,6 +4,15 @@
 #include "common/value.h"
 #include <utility>
 
+string format(int number, int count) {
+  string res(count, '0');
+  for (int i = 0; i < count; i++) {
+    res[count - i - 1] = std::to_string(number % 10)[0];
+    number /= 10;
+  }
+  return res;
+}
+
 int DateType::compare(const Value &left, const Value &right) const {
   return left.get_int() - right.get_int();
 }
@@ -15,11 +24,11 @@ RC DateType::set_value_from_str(Value &val, const string &data) const {
 RC DateType::to_string(const Value &val, string &result) const {
   int num = val.get_int();
   string res;
-  res += std::to_string(num / 10000);
+  res += format(num / 10000, 4);
   res += "-";
-  res += std::to_string(num / 100 % 100);
+  res += format(num / 100 % 100, 2);
   res += "-";
-  res += std::to_string(num % 100);
+  res += format(num % 100, 2);
 
   result = std::move(res);
   return RC::SUCCESS;
