@@ -11,7 +11,10 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/comparator.h"
 #include "common/log/log.h"
 #include "common/type/char_type.h"
+#include "common/type/attr_type.h"
 #include "common/value.h"
+
+bool is_lunar_year(int year) { return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0; }
 
 int CharType::compare(const Value &left, const Value &right) const
 {
@@ -28,8 +31,26 @@ RC CharType::set_value_from_str(Value &val, const string &data) const
 
 RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
 {
+  static const int day_of_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
   switch (type) {
-    default: return RC::UNIMPLEMENTED;
+    case AttrType::DATES: {
+      int year, month, day;
+      if (sscanf(val.data(), "%4d-%2d-%2d", &year, &month, &day) != 3) {
+        return RC::INVALID_DATE;
+      }
+
+      if (year < 0 || month < 1 || month > 12 || day < 1 ||
+          day > day_of_month[month - 1] + (month == 2 && is_lunar_year(year))) {
+        return RC::INVALID_DATE;
+      }
+
+      int res = year * 10000 + month * 100 + day;
+      result.set_type(AttrType::DATES);
+      result.set_data((char *)&res, sizeof(res));
+    } break;
+    default: {
+      return RC::UNIMPLEMENTED;
+    } break;
   }
   return RC::SUCCESS;
 }
@@ -38,6 +59,8 @@ int CharType::cast_cost(AttrType type)
 {
   if (type == AttrType::CHARS) {
     return 0;
+  } else if (type == AttrType::DATES) {
+    return 1;
   }
   return INT32_MAX;
 }

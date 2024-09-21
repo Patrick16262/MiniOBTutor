@@ -9,6 +9,22 @@
             "command": "sudo -E env PATH=$PATH bash ${workspaceFolder}/build.sh init"
         },
         {
+            "label": "cmake",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/build && cmake ..",
+            "dependsOn": [
+                "gen_parser"
+            ]
+        },
+        {
+            "label": "make",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/build && make -j12",
+            "dependsOn": [
+                "cmake"
+            ]
+        },
+        {
             "label": "build_debug",
             "type": "shell",
             "command": "bash build.sh debug --make -j12",
@@ -16,12 +32,18 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "dependsOn": [
+                "gen_parser"
+            ]
         },
         {
             "label": "build_release",
             "type": "shell",
-            "command": "bash build.sh release --make -j12"
+            "command": "bash build.sh release --make -j12",
+            "dependsOn": [
+                "gen_parser"
+            ]
         },
         {
             "label": "gen_parser",
