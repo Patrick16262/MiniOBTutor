@@ -59,7 +59,7 @@ RC Field::set_value(Record &record, const Value &value)
     }
   }
 
-  if (record.len() >= field_->offset() + field_->len()) {
+  if (field_->offset() + field_->len() > record.len()) {
     LOG_WARN("record is too short to store field data");
     return RC::INVALID_ARGUMENT;
   }
