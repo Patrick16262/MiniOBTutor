@@ -16,6 +16,8 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "common/value.h"
 #include "storage/record/record.h"
+#include <algorithm>
+#include <cstring>
 
 void Field::set_int(Record &record, int value)
 {
@@ -39,6 +41,7 @@ void Field::set_data(Record &record, const char *data, int len)
   ASSERT(field_->len() >= len, "copy len too large");
   ASSERT(record.len() >= field_->offset() + field_->len(), "record is too short to store field data");
   char *field_data = record.data() + field_->offset();
+  memset(field_data, 0, field_->len());
   memcpy(field_data, data, len);
 }
 
@@ -46,7 +49,7 @@ RC Field::set_value(Record &record, const Value &value)
 {
   Value real_value;
 
-  if (value.attr_type() != field_->type()) {
+  if (value.attr_type() == field_->type()) {
     real_value = value;
   } else {
     RC rc = Value::cast_to(value, field_->type(), real_value);
@@ -56,14 +59,11 @@ RC Field::set_value(Record &record, const Value &value)
     }
   }
 
-  if (real_value.length() > field_->len()) {
-    LOG_WARN("value length is too large: %d", real_value.length());
-    return RC::VALUE_TOO_LARGE;
-  } else if (record.len() >= field_->offset() + field_->len()) {
+  if (record.len() >= field_->offset() + field_->len()) {
     LOG_WARN("record is too short to store field data");
     return RC::INVALID_ARGUMENT;
   }
 
-  set_data(record, real_value.data(), real_value.length());
+  set_data(record, real_value.data(), std::min(real_value.length(), field_->len()));
   return RC::SUCCESS;
 }
