@@ -43,6 +43,9 @@ public:
   int  get_int(const Record &record);
 
   const char *get_data(const Record &record);
+  void set_data(Record &record, const char *data, int len);
+
+  RC set_value(Record &record, const Value &value);
 
 private:
   const Table     *table_ = nullptr;

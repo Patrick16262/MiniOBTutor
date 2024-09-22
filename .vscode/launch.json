@@ -7,7 +7,7 @@
         {
             "type": "cppdbg",
             "request": "launch",
-            "name": "Debug",
+            "name": "Build and Debug with GDB",
             "program": "${workspaceFolder}/${defaultBuildTask}/bin/observer",
             "args": ["-f", "${workspaceFolder}/etc/observer.ini", "-P", "cli"],
             "cwd": "${workspaceFolder}/${defaultBuildTask}/",
@@ -17,6 +17,18 @@
                 "externalConsole":true
             },
             "preLaunchTask": "build_debug"
+        }, {
+            "type": "cppdbg",
+            "request": "launch",
+            "name": "Debug with GDB",
+            "program": "${workspaceFolder}/${defaultBuildTask}/bin/observer",
+            "args": ["-f", "${workspaceFolder}/etc/observer.ini", "-P", "cli"],
+            "cwd": "${workspaceFolder}/${defaultBuildTask}/",
+            "internalConsoleOptions": "openOnSessionStart",
+            "osx": {
+                "MIMode": "lldb",
+                "externalConsole":true
+            }
         }
     ]
 }

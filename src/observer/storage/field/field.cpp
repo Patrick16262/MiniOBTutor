@@ -33,3 +33,37 @@ int Field::get_int(const Record &record)
 }
 
 const char *Field::get_data(const Record &record) { return record.data() + field_->offset(); }
+
+void Field::set_data(Record &record, const char *data, int len)
+{
+  ASSERT(field_->len() >= len, "copy len too large");
+  ASSERT(record.len() >= field_->offset() + field_->len(), "record is too short to store field data");
+  char *field_data = record.data() + field_->offset();
+  memcpy(field_data, data, len);
+}
+
+RC Field::set_value(Record &record, const Value &value)
+{
+  Value real_value;
+
+  if (value.attr_type() != field_->type()) {
+    real_value = value;
+  } else {
+    RC rc = Value::cast_to(value, field_->type(), real_value);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to cast value: %s", strrc(rc));
+      return rc;
+    }
+  }
+
+  if (real_value.length() > field_->len()) {
+    LOG_WARN("value length is too large: %d", real_value.length());
+    return RC::VALUE_TOO_LARGE;
+  } else if (record.len() >= field_->offset() + field_->len()) {
+    LOG_WARN("record is too short to store field data");
+    return RC::INVALID_ARGUMENT;
+  }
+
+  set_data(record, real_value.data(), real_value.length());
+  return RC::SUCCESS;
+}
