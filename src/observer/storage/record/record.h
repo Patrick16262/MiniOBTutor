@@ -226,6 +226,13 @@ public:
     return RC::SUCCESS;
   }
 
+  Record get_copy() {
+    Record record;
+    record.copy_data(data_, len_);
+    record.set_rid(rid_);
+    return record;
+  }
+
   char       *data() { return this->data_; }
   const char *data() const { return this->data_; }
   int         len() const { return this->len_; }

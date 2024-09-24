@@ -13,7 +13,8 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 {
   RC                                 rc    = RC::SUCCESS;
   std::unique_ptr<PhysicalOperator> &child = children_.front();
-  vector<Record>                     records;
+  vector<Record>                     old_records;
+  vector<Record>                     new_records;
 
   rc = child->open(trx);
   if (rc != RC::SUCCESS) {
@@ -29,7 +30,8 @@ RC UpdatePhysicalOperator::open(Trx *trx)
     }
 
     RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
-    Record   &record    = row_tuple->record();
+    Record   record    = row_tuple->record().get_copy();
+    old_records.push_back(record);
 
     for (int i = 0; i < value_amount_; i++) {
       if ((rc = fields_[i].set_value(record, values_[i])) != RC::SUCCESS) {
@@ -38,7 +40,7 @@ RC UpdatePhysicalOperator::open(Trx *trx)
       }
     }
 
-    records.push_back(std::move(record));
+    new_records.push_back(std::move(record));
   }
 
   if (rc != RC::RECORD_EOF) {
@@ -49,11 +51,17 @@ RC UpdatePhysicalOperator::open(Trx *trx)
     return rc;
   }
 
-  for (auto &record : records) {
-    if ((rc =trx->delete_record(table_, record)) != RC::SUCCESS) {
+  for (auto &record : old_records) {
+    rc = trx->delete_record(table_, record);
+    if (rc != RC::SUCCESS) {
       LOG_ERROR("failed to delete record: %s", strrc(rc));
       return rc;
-    } else if ((rc = trx->insert_record(table_, record)) != RC::SUCCESS) {
+    }
+  }
+
+  for (auto &record : new_records) {
+    rc = trx->insert_record(table_, record);
+    if (rc != RC::SUCCESS) {
       LOG_ERROR("failed to insert record: %s", strrc(rc));
       return rc;
     }
